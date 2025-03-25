@@ -17,7 +17,7 @@ os.makedirs(REPORT_FOLDER, exist_ok=True)
 
 def extract_text(doc_file):
     doc = Document(doc_file)
-    return "\n".join([para.text for para in doc.paragraphs if para.text.strip() != ""])
+    return "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
 
 def clean_markdown(text):
     text = re.sub(r'^#+\s*', '', text, flags=re.MULTILINE)
@@ -47,7 +47,7 @@ def generate_section(prompt):
             max_tokens=1500
         )
         content = response['choices'][0]['message']['content']
-        print("OpenAI responded.")
+        print("OpenAI responded successfully.")
         return content
     except Exception as e:
         print("OpenAI API error:", e)
