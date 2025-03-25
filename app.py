@@ -1,16 +1,14 @@
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from docx import Document
 from datetime import datetime
-import openai
+from openai import OpenAI
 import os
 
 app = Flask(__name__)
 CORS(app)
 
-# Set your OpenAI API key here or load from environment variable
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 REPORT_FOLDER = os.path.join(app.root_path, 'static', 'reports')
 os.makedirs(REPORT_FOLDER, exist_ok=True)
@@ -20,16 +18,20 @@ def extract_text(doc_file):
     return "\n".join([para.text for para in doc.paragraphs if para.text.strip() != ""])
 
 def generate_section(prompt):
-    response = openai.ChatCompletion.create(
-        model="gpt-4-0125-preview",
-        messages=[
-            {"role": "system", "content": "You are a professional business consultant. Generate high-quality feasibility analysis reports based on client inputs."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.7,
-        max_tokens=1500
-    )
-    return response['choices'][0]['message']['content']
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4-0125-preview",
+            messages=[
+                {"role": "system", "content": "You are a professional business consultant. Generate high-quality feasibility analysis reports based on client inputs."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1500
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        print("OpenAI API error:", e)
+        return "Error generating this section."
 
 @app.route('/')
 def home():
@@ -45,7 +47,6 @@ def generate_report():
 
     intake_text = extract_text(intake)
     rubric_text = extract_text(rubric)
-
     combined_context = f"Intake Form Content:\n{intake_text}\n\nScoring Rubric Content:\n{rubric_text}"
 
     doc = Document()
