@@ -1,14 +1,15 @@
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from docx import Document
 from datetime import datetime
-from openai import OpenAI
+import openai
 import os
 
 app = Flask(__name__)
 CORS(app)
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 REPORT_FOLDER = os.path.join(app.root_path, 'static', 'reports')
 os.makedirs(REPORT_FOLDER, exist_ok=True)
@@ -19,7 +20,7 @@ def extract_text(doc_file):
 
 def generate_section(prompt):
     try:
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-4-0125-preview",
             messages=[
                 {"role": "system", "content": "You are a professional business consultant. Generate high-quality feasibility analysis reports based on client inputs."},
@@ -28,7 +29,7 @@ def generate_section(prompt):
             temperature=0.7,
             max_tokens=1500
         )
-        return response.choices[0].message.content
+        return response['choices'][0]['message']['content']
     except Exception as e:
         print("OpenAI API error:", e)
         return "Error generating this section."
